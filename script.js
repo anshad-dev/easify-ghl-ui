@@ -24,21 +24,8 @@ const elements = {
 
 function extractLocationIdFromGHL() {
     try {
-        debugger
-        const currentUrl = new URL(window.location.href);
-
-        // Get the pathname property
-        const pathname = currentUrl.pathname;
-
-        // Split the pathname and get the 4th segment
-        const locationId = pathname.split('/')[4];
-
-        // Log the location ID
-        console.log('Location ID:', locationId);
-
-
         const originalFetch = window.fetch;
-        window.fetch = function (...args) {
+        window.fetch = function(...args) {
             const url = args[0];
             if (typeof url === 'string' && url.includes('locationId=')) {
                 const match = url.match(/locationId=([a-zA-Z0-9_-]{10,})/);
@@ -49,10 +36,10 @@ function extractLocationIdFromGHL() {
             }
             return originalFetch.apply(this, args);
         };
-
+        
         // Intercept XMLHttpRequest
         const originalOpen = XMLHttpRequest.prototype.open;
-        XMLHttpRequest.prototype.open = function (method, url) {
+        XMLHttpRequest.prototype.open = function(method, url) {
             if (typeof url === 'string' && url.includes('locationId=')) {
                 const match = url.match(/locationId=([a-zA-Z0-9_-]{10,})/);
                 if (match && match[1]) {
@@ -62,7 +49,7 @@ function extractLocationIdFromGHL() {
             }
             return originalOpen.apply(this, arguments);
         };
-
+        
         return null;
     } catch (e) {
         return null;
@@ -76,25 +63,25 @@ function getLocationIdFromUrl() {
         if (savedLocationId && savedLocationId.length >= 10 && !savedLocationId.includes('{{')) {
             return savedLocationId;
         }
-
+        
         const urlParams = new URLSearchParams(window.location.search);
-        const locationIdFromParams = urlParams.get('location_id') ||
-            urlParams.get('locationId') ||
-            urlParams.get('location');
-
-        if (locationIdFromParams &&
-            locationIdFromParams !== '{{location.id}}' &&
+        const locationIdFromParams = urlParams.get('location_id') || 
+                                     urlParams.get('locationId') || 
+                                     urlParams.get('location');
+        
+        if (locationIdFromParams && 
+            locationIdFromParams !== '{{location.id}}' && 
             !locationIdFromParams.includes('{{') &&
             locationIdFromParams.length >= 10) {
             localStorage.setItem('ghl_location_id', locationIdFromParams);
             return locationIdFromParams;
         }
-
+        
         const ghlLocationId = extractLocationIdFromGHL();
         if (ghlLocationId) {
             return ghlLocationId;
         }
-
+        
         if (document.referrer) {
             const match = document.referrer.match(/\/location\/([a-zA-Z0-9_-]{10,})/);
             if (match && match[1]) {
@@ -102,7 +89,7 @@ function getLocationIdFromUrl() {
                 return match[1];
             }
         }
-
+        
         return null;
     } catch (e) {
         return null;
@@ -150,7 +137,7 @@ async function handleFetchContacts() {
 
         const contacts = (data.data || []).map((item, index) => ({
             id: index + 1,
-            name: item.number,
+            name: item.number,   
             number: item.number
         }));
 
@@ -250,7 +237,7 @@ async function handleSubmit() {
 
     try {
         const selectedContact = state.contacts.find(c => state.selectedContacts.has(c.id));
-
+        
         if (!selectedContact) {
             throw new Error('No contact selected');
         }
@@ -266,7 +253,7 @@ async function handleSubmit() {
             },
             body: JSON.stringify({
                 location_id: state.locationId,
-                from_number: fromNumber
+                from_number: fromNumber  
             })
         });
 
