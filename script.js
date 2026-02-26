@@ -25,6 +25,7 @@ const elements = {
 function extractLocationIdFromGHL() {
     try {
         const originalFetch = window.fetch;
+        debugger
         window.fetch = function(...args) {
             const url = args[0];
             if (typeof url === 'string' && url.includes('locationId=')) {
@@ -213,6 +214,8 @@ function updateSelectionUI() {
         }, 300);
     }
 }
+
+
 
 async function handleSubmit() {
     if (state.selectedContacts.size === 0) return;
