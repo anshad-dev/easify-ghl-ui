@@ -59,33 +59,35 @@ function extractLocationIdFromGHL() {
 // Function to extract location ID from URL
 function getLocationIdFromUrl() {
     try {
-        // 1️⃣ From URL path: /v2/location/{id}/
-        const pathMatch = window.location.pathname.match(/\/location\/([a-zA-Z0-9_-]{10,})/);
-        if (pathMatch && pathMatch[1]) {
-            localStorage.setItem('ghl_location_id', pathMatch[1]);
-            return pathMatch[1];
+        // ✅ 1. From parent page (GHL iframe referrer)
+        if (document.referrer) {
+            const refMatch = document.referrer.match(/\/location\/([a-zA-Z0-9_-]{10,})/);
+            if (refMatch && refMatch[1]) {
+                localStorage.setItem('ghl_location_id', refMatch[1]);
+                return refMatch[1];
+            }
         }
 
-        // 2️⃣ From query params (fallback)
-        const urlParams = new URLSearchParams(window.location.search);
+        // ✅ 2. From URL params (fallback)
+        const params = new URLSearchParams(window.location.search);
         const paramId =
-            urlParams.get('location_id') ||
-            urlParams.get('locationId') ||
-            urlParams.get('location');
+            params.get('location_id') ||
+            params.get('locationId') ||
+            params.get('location');
 
         if (paramId && paramId.length >= 10 && !paramId.includes('{{')) {
             localStorage.setItem('ghl_location_id', paramId);
             return paramId;
         }
 
-        // 3️⃣ From localStorage
+        // ✅ 3. From localStorage (last resort)
         const saved = localStorage.getItem('ghl_location_id');
         if (saved && saved.length >= 10) {
             return saved;
         }
 
         return null;
-    } catch (e) {
+    } catch {
         return null;
     }
 }
@@ -210,11 +212,15 @@ function updateSelectionUI() {
 
 async function handleSubmit() {
     if (state.selectedContacts.size === 0) return;
+    // 🔐 Always resolve locationId at submit time
+    state.locationId = getLocationIdFromUrl();
+
+    console.log("📍 Final Location ID:", state.locationId);
 
     if (!state.locationId) {
-        state.locationId = getLocationIdFromUrl();
+        showNotification('Unable to detect GHL Location ID.', 'error');
+        return;
     }
-    console.log("📍 Location ID:", state.locationId);
     
     const originalBtnContent = elements.submitBtn.innerHTML;
     elements.submitBtn.disabled = true;
@@ -329,6 +335,7 @@ async function fetchGhlContacts(token) {
 
     return await response.json();
 }
+
 
 
 
