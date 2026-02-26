@@ -318,6 +318,11 @@ async function handleSubmit() {
 
         const fromNumber = selectedContact.number;
 
+        console.log("📦 Payload being sent:", {
+            location_id: state.locationId,
+            from_number: fromNumber
+        });
+
         const response = await fetch("https://easifyqc67.zinops.com/api/external/gh/connect-user", {
             method: "POST",
             headers: {
