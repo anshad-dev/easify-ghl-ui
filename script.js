@@ -22,24 +22,6 @@ const elements = {
     notificationContainer: document.getElementById('notification-container')
 };
 
-// ✅ Listen for locationId sent via postMessage from parent
-window.addEventListener('message', (event) => {
-    if (event.data && event.data.locationId) {
-        state.locationId = event.data.locationId;
-        localStorage.setItem('ghl_location_id', event.data.locationId);
-        console.log("📍 Location ID received via postMessage:", state.locationId);
-    }
-});
-
-// ✅ Request locationId from parent frame via postMessage
-function requestLocationIdFromParent() {
-    try {
-        window.parent.postMessage({ action: 'getLocationId' }, '*');
-    } catch (e) {
-        console.warn('postMessage to parent failed:', e);
-    }
-}
-
 function extractLocationIdFromGHL() {
     try {
         const originalFetch = window.fetch;
@@ -54,7 +36,8 @@ function extractLocationIdFromGHL() {
             }
             return originalFetch.apply(this, args);
         };
-
+        
+        // Intercept XMLHttpRequest
         const originalOpen = XMLHttpRequest.prototype.open;
         XMLHttpRequest.prototype.open = function(method, url) {
             if (typeof url === 'string' && url.includes('locationId=')) {
@@ -66,44 +49,17 @@ function extractLocationIdFromGHL() {
             }
             return originalOpen.apply(this, arguments);
         };
-
+        
         return null;
     } catch (e) {
         return null;
     }
 }
 
-// ✅ Comprehensive location ID extraction with all strategies
+// Function to extract location ID from URL
 function getLocationIdFromUrl() {
     try {
-        // 1. Query param — most reliable when GHL app URL uses {{location.id}}
-        const urlParams = new URLSearchParams(window.location.search);
-        const qpId = urlParams.get('locationId') || urlParams.get('location_id');
-        if (qpId && qpId.length >= 10) {
-            localStorage.setItem('ghl_location_id', qpId);
-            return qpId;
-        }
-
-        // 2. Try parent (top) URL — works only if same-origin
-        try {
-            const topHref = window.top.location.href;
-            const topMatch = topHref.match(/\/location\/([a-zA-Z0-9_-]{10,})/);
-            if (topMatch && topMatch[1]) {
-                localStorage.setItem('ghl_location_id', topMatch[1]);
-                return topMatch[1];
-            }
-            // Also check query params of parent URL
-            const topParams = new URLSearchParams(new URL(topHref).search);
-            const topQp = topParams.get('locationId') || topParams.get('location_id');
-            if (topQp && topQp.length >= 10) {
-                localStorage.setItem('ghl_location_id', topQp);
-                return topQp;
-            }
-        } catch (e) {
-            // cross-origin — ignore
-        }
-
-        // 3. Try document.referrer
+        // ✅ 1. From parent page (GHL iframe referrer)
         if (document.referrer) {
             const refMatch = document.referrer.match(/\/location\/([a-zA-Z0-9_-]{10,})/);
             if (refMatch && refMatch[1]) {
@@ -112,31 +68,19 @@ function getLocationIdFromUrl() {
             }
         }
 
-        // 4. Try current URL path
-        const pathMatch = window.location.pathname.match(/\/location\/([a-zA-Z0-9_-]{10,})/);
-        if (pathMatch && pathMatch[1]) {
-            localStorage.setItem('ghl_location_id', pathMatch[1]);
-            return pathMatch[1];
+        // ✅ 2. From URL params (fallback)
+        const params = new URLSearchParams(window.location.search);
+        const paramId =
+            params.get('location_id') ||
+            params.get('locationId') ||
+            params.get('location');
+
+        if (paramId && paramId.length >= 10 && !paramId.includes('{{')) {
+            localStorage.setItem('ghl_location_id', paramId);
+            return paramId;
         }
 
-        // 5. Try window.name (some platforms pass JSON context here)
-        if (window.name) {
-            try {
-                const parsed = JSON.parse(window.name);
-                if (parsed.locationId && parsed.locationId.length >= 10) {
-                    localStorage.setItem('ghl_location_id', parsed.locationId);
-                    return parsed.locationId;
-                }
-            } catch (e) {
-                // not JSON — try regex match directly
-                const nameMatch = window.name.match(/([a-zA-Z0-9_-]{10,})/);
-                if (nameMatch && nameMatch[1]) {
-                    return nameMatch[1];
-                }
-            }
-        }
-
-        // 6. Last fallback: localStorage
+        // ✅ 3. From localStorage (last resort)
         const saved = localStorage.getItem('ghl_location_id');
         if (saved && saved.length >= 10) {
             return saved;
@@ -148,20 +92,15 @@ function getLocationIdFromUrl() {
     }
 }
 
+
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
-    extractLocationIdFromGHL();
     state.locationId = getLocationIdFromUrl();
-
-    if (!state.locationId) {
-        requestLocationIdFromParent();
-    }
-
-    console.log("📍 Initial Location ID:", state.locationId || '(not yet detected)');
     initEventListeners();
 });
 
 function initEventListeners() {
+    // API Token Input
     elements.apiTokenInput.addEventListener('input', (e) => {
         state.apiToken = e.target.value.trim();
         if (state.apiToken.length > 0) {
@@ -172,7 +111,10 @@ function initEventListeners() {
         }
     });
 
+    // Fetch Button
     elements.fetchBtn.addEventListener('click', handleFetchContacts);
+
+    // Submit 
     elements.submitBtn.addEventListener('click', handleSubmit);
 }
 
@@ -191,7 +133,7 @@ async function handleFetchContacts() {
 
         const contacts = (data.data || []).map((item, index) => ({
             id: index + 1,
-            name: item.number,
+            name: item.number,   
             number: item.number
         }));
 
@@ -270,58 +212,28 @@ function updateSelectionUI() {
 
 async function handleSubmit() {
     if (state.selectedContacts.size === 0) return;
-
-    // ✅ Re-run all detection strategies fresh on submit
+    // 🔐 Always resolve locationId at submit time
     state.locationId = getLocationIdFromUrl();
-
-    // ✅ Extra attempt: parse parent URL directly (same-origin only)
-    if (!state.locationId) {
-        try {
-            const topUrl = window.top.location.href;
-            const match = topUrl.match(/\/location\/([a-zA-Z0-9_-]{10,})/);
-            if (match) {
-                state.locationId = match[1];
-                localStorage.setItem('ghl_location_id', match[1]);
-            }
-        } catch (e) {
-            // cross-origin — skip
-        }
-    }
-
-    // ✅ Extra attempt: check window.name for JSON context
-    if (!state.locationId && window.name) {
-        try {
-            const parsed = JSON.parse(window.name);
-            if (parsed.locationId) {
-                state.locationId = parsed.locationId;
-            }
-        } catch (e) {}
-    }
 
     console.log("📍 Final Location ID:", state.locationId);
 
     if (!state.locationId) {
-        showNotification('Unable to detect GHL Location ID. Please ensure the app URL includes ?locationId={{location.id}}', 'error');
+        showNotification('Unable to detect GHL Location ID.', 'error');
         return;
     }
-
+    
     const originalBtnContent = elements.submitBtn.innerHTML;
     elements.submitBtn.disabled = true;
     elements.submitBtn.innerHTML = '<div class="spinner" style="width: 20px; height: 20px; border-width: 2px; margin: 0;"></div> Sending...';
 
     try {
         const selectedContact = state.contacts.find(c => state.selectedContacts.has(c.id));
-
+        
         if (!selectedContact) {
             throw new Error('No contact selected');
         }
 
         const fromNumber = selectedContact.number;
-
-        console.log("📦 Payload being sent:", {
-            location_id: state.locationId,
-            from_number: fromNumber
-        });
 
         const response = await fetch("https://easifyqc67.zinops.com/api/external/gh/connect-user", {
             method: "POST",
@@ -332,7 +244,7 @@ async function handleSubmit() {
             },
             body: JSON.stringify({
                 location_id: state.locationId,
-                from_number: fromNumber
+                from_number: fromNumber  
             })
         });
 
@@ -423,3 +335,7 @@ async function fetchGhlContacts(token) {
 
     return await response.json();
 }
+
+
+
+
