@@ -59,7 +59,19 @@ function extractLocationIdFromGHL() {
 // Function to extract location ID from URL
 function getLocationIdFromUrl() {
     try {
-        // ✅ 1. From parent page (GHL iframe referrer)
+        // ✅ 1. Try parent (top) URL first — MOST RELIABLE
+        try {
+            const topHref = window.top.location.href;
+            const topMatch = topHref.match(/\/location\/([a-zA-Z0-9_-]{10,})/);
+            if (topMatch && topMatch[1]) {
+                localStorage.setItem('ghl_location_id', topMatch[1]);
+                return topMatch[1];
+            }
+        } catch (e) {
+            // cross-origin safety — ignore
+        }
+
+        // ✅ 2. Try document.referrer
         if (document.referrer) {
             const refMatch = document.referrer.match(/\/location\/([a-zA-Z0-9_-]{10,})/);
             if (refMatch && refMatch[1]) {
@@ -68,19 +80,14 @@ function getLocationIdFromUrl() {
             }
         }
 
-        // ✅ 2. From URL params (fallback)
-        const params = new URLSearchParams(window.location.search);
-        const paramId =
-            params.get('location_id') ||
-            params.get('locationId') ||
-            params.get('location');
-
-        if (paramId && paramId.length >= 10 && !paramId.includes('{{')) {
-            localStorage.setItem('ghl_location_id', paramId);
-            return paramId;
+        // ✅ 3. Try current URL (rarely works in iframe)
+        const pathMatch = window.location.pathname.match(/\/location\/([a-zA-Z0-9_-]{10,})/);
+        if (pathMatch && pathMatch[1]) {
+            localStorage.setItem('ghl_location_id', pathMatch[1]);
+            return pathMatch[1];
         }
 
-        // ✅ 3. From localStorage (last resort)
+        // ✅ 4. Last fallback: localStorage
         const saved = localStorage.getItem('ghl_location_id');
         if (saved && saved.length >= 10) {
             return saved;
@@ -211,8 +218,8 @@ function updateSelectionUI() {
 }
 
 async function handleSubmit() {
-    if (state.selectedContacts.size === 0) return;
-    // 🔐 Always resolve locationId at submit time
+if (state.selectedContacts.size === 0) return;
+
     state.locationId = getLocationIdFromUrl();
 
     console.log("📍 Final Location ID:", state.locationId);
