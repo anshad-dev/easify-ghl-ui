@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Easify SMS</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <img src="easifylogo.png" alt="Easify Logo" class="logo" onerror="this.style.display='none'">
+            <h1>Easify <span class="highlight">SMS</span></h1>
+            <p class="subtitle">Send bulk SMS messages with ease</p>
+        </header>
+
+        <main>
+            <!-- Step 1: API Token -->
+            <section id="step-auth" class="card active">
+                <div class="card-header">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="card-icon">
+                        <path
+                            d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4">
+                        </path>
+                    </svg>
+                    <h2>API Token</h2>
+                </div>
+                <p class="card-desc">Enter your API token to authenticate</p>
+
+                <div class="input-group">
+                    <input type="password" id="api-token" placeholder="Enter your API token..." autocomplete="off">
+                    <span class="status-icon success hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </span>
+                </div>
+
+                <div id="auth-error" class="error-message hidden">Invalid API Token provided.</div>
+
+                <button id="btn-fetch" class="btn primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="btn-icon">
+                        <path
+                            d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
+                        </path>
+                    </svg>
+                    Fetch Phone Numbers
+                </button>
+            </section>
+
+            <!-- Loading State -->
+            <div id="loading" class="loading-state hidden">
+                <div class="spinner"></div>
+                <p>Fetching contacts...</p>
+            </div>
+
+            <!-- Step 2: Phone Numbers List -->
+            <section id="step-contacts" class="card hidden">
+                <div class="card-header">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="card-icon">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <h2>Phone Numbers</h2>
+                </div>
+                <p class="card-desc">Select recipients for your message</p>
+
+                <div id="contacts-list" class="contacts-list text-bold">
+                    <!-- Contacts will be injected here -->
+                </div>
+
+                <div class="selection-summary">
+                    <span id="selection-count"></span>
+                </div>
+            </section>
+        </main>
+
+        <!-- Submit Action Bar -->
+        <div id="action-bar" class="action-bar hidden">
+            <button id="btn-submit" class="btn primary large">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="btn-icon">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+                Submit
+            </button>
+        </div>
+
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container"></div>
+
+    <!-- Scripts: Load CryptoJS BEFORE your custom script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="script.js"></script>
+
+</body>
+
+</html>
