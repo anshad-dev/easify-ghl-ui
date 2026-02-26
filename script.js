@@ -53,50 +53,9 @@ function extractLocationIdFromGHL() {
         
         return null;
     } catch (e) {
-        console.log(e)
         return null;
     }
 }
-
-// Function to extract location ID from URL
-// function getLocationIdFromUrl() {
-//     try {
-//         const savedLocationId = localStorage.getItem('ghl_location_id');
-//         if (savedLocationId && savedLocationId.length >= 10 && !savedLocationId.includes('{{')) {
-//             return savedLocationId;
-//         }
-        
-//         const urlParams = new URLSearchParams(window.location.search);
-//         const locationIdFromParams = urlParams.get('location_id') || 
-//                                      urlParams.get('locationId') || 
-//                                      urlParams.get('location');
-        
-//         if (locationIdFromParams && 
-//             locationIdFromParams !== '{{location.id}}' && 
-//             !locationIdFromParams.includes('{{') &&
-//             locationIdFromParams.length >= 10) {
-//             localStorage.setItem('ghl_location_id', locationIdFromParams);
-//             return locationIdFromParams;
-//         }
-        
-//         const ghlLocationId = extractLocationIdFromGHL();
-//         if (ghlLocationId) {
-//             return ghlLocationId;
-//         }
-        
-//         if (document.referrer) {
-//             const match = document.referrer.match(/\/location\/([a-zA-Z0-9_-]{10,})/);
-//             if (match && match[1]) {
-//                 localStorage.setItem('ghl_location_id', match[1]);
-//                 return match[1];
-//             }
-//         }
-        
-//         return null;
-//     } catch (e) {
-//         return null;
-//     }
-// }
 
 // Function to extract location ID from URL
 function getLocationIdFromUrl() {
@@ -137,7 +96,6 @@ function getLocationIdFromUrl() {
         return null;
     }
 }
-
 
 
 // Initialization
